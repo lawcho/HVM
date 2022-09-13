@@ -86,7 +86,7 @@ typedef u64 Ptr;
 #define APP (0x6) // arity = 2
 #define SUP (0x7) // arity = 2 // TODO: rename to SUP
 #define CTR (0x8) // arity = user defined
-#define FUN (0x9) // arity = user defined
+
 #define OP2 (0xA) // arity = 2
 #define NUM (0xB) // arity = 0 (unboxed)
 #define FLO (0xC) // arity = 0 (unboxed)
@@ -271,11 +271,6 @@ Ptr Ctr(u64 ari, u64 fun, u64 pos) {
   return (CTR * TAG) | (fun * EXT) | pos;
 }
 
-// FIXME: update name to Fun
-Ptr Cal(u64 ari, u64 fun, u64 pos) {
-  return (FUN * TAG) | (fun * EXT) | pos;
-}
-
 u64 get_tag(Ptr lnk) {
   return lnk / TAG;
 }
@@ -410,7 +405,7 @@ void collect(Worker* mem, Ptr term) {
     case NUM: {
       break;
     }
-    case CTR: case FUN: {
+    case CTR: {
       u64 arity = ask_ari(mem, term);
       for (u64 i = 0; i < arity; ++i) {
         collect(mem, ask_arg(mem,term,i));
@@ -468,8 +463,8 @@ Ptr cal_par(Worker* mem, u64 host, Ptr term, Ptr argn, u64 n) {
       link(mem, fun1+i, ask_arg(mem, argn, 1));
     }
   }
-  link(mem, par0+0, Cal(arit, func, fun0));
-  link(mem, par0+1, Cal(arit, func, fun1));
+  link(mem, par0+0, Ctr(arit, func, fun0));
+  link(mem, par0+1, Ctr(arit, func, fun1));
   u64 done = Par(get_ext(argn), par0);
   link(mem, host, done);
   return done;
@@ -534,7 +529,7 @@ Ptr reduce(Worker* mem, u64 root, u64 slen) {
           }
           break;
         }
-        case FUN: {
+        case CTR: {
           u64 fun = get_ext(term);
           u64 ari = ask_ari(mem, term);
 
@@ -837,7 +832,7 @@ Ptr reduce(Worker* mem, u64 root, u64 slen) {
 
           break;
         }
-        case FUN: {
+        case CTR: {
           u64 fun = get_ext(term);
           u64 ari = ask_ari(mem, term);
 
@@ -930,7 +925,7 @@ Ptr normal_go(Worker* mem, u64 host, u64 sidx, u64 slen) {
           break;
         }
       }
-      case CTR: case FUN: {
+      case CTR: {
         u64 arity = (u64)ask_ari(mem, term);
         for (u64 i = 0; i < arity; ++i) {
           rec_locs[rec_size++] = get_loc(term,i);
@@ -1182,7 +1177,7 @@ void readback_vars(Stk* vars, Worker* mem, Ptr term, Stk* seen) {
         readback_vars(vars, mem, arg1, seen);
         break;
       }
-      case CTR: case FUN: {
+      case CTR: {
         u64 arity = ask_ari(mem, term);
         for (u64 i = 0; i < arity; ++i) {
           readback_vars(vars, mem, ask_arg(mem, term, i), seen);
@@ -1291,7 +1286,7 @@ void readback_term(Stk* chrs, Worker* mem, Ptr term, Stk* vars, Stk* dirs, char*
       //printf("- u32 done\n");
       break;
     }
-    case CTR: case FUN: {
+    case CTR: {
       u64 func = get_ext(term);
       u64 arit = ask_ari(mem, term);
       stk_push(chrs, '(');
@@ -1377,7 +1372,7 @@ void debug_print_lnk(Ptr x) {
     case APP: printf("APP"); break;
     case SUP: printf("SUP"); break;
     case CTR: printf("CTR"); break;
-    case FUN: printf("FUN"); break;
+
     case OP2: printf("OP2"); break;
     case NUM: printf("NUM"); break;
     case FLO: printf("FLO"); break;
@@ -1421,9 +1416,9 @@ int main(int argc, char* argv[]) {
   mem.funs = id_to_arity_size;
   assert(mem.node);
   if (argc <= 1) {
-    mem.node[mem.size++] = Cal(0, _MAIN_, 0);
+    mem.node[mem.size++] = Ctr(0, _MAIN_, 0);
   } else {
-    mem.node[mem.size++] = Cal(argc - 1, _MAIN_, 1);
+    mem.node[mem.size++] = Ctr(argc - 1, _MAIN_, 1);
     for (u64 i = 1; i < argc; ++i) {
       mem.node[mem.size++] = parse_arg(argv[i], id_to_name_data, id_to_name_size);
     }
