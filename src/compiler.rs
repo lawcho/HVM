@@ -347,16 +347,6 @@ fn compile_func_rule_term(
         }
         format!("Ctr({}, {}, {})", ctr_args.len(), func, name)
       }
-      bd::DynTerm::Cal { func, args } => {
-        let cal_args: Vec<String> =
-          args.iter().map(|arg| compile_term(code, tab, vars, nams, globs, arg)).collect();
-        let name = fresh(nams, "cal");
-        line(code, tab, &format!("u64 {} = alloc(mem, {});", name, cal_args.len()));
-        for (i, arg) in cal_args.iter().enumerate() {
-          line(code, tab, &format!("link(mem, {} + {}, {});", name, i, arg));
-        }
-        format!("Cal({}, {}, {})", cal_args.len(), func, name)
-      }
       bd::DynTerm::Num { numb } => {
         format!("Num({}ull)", numb)
       }

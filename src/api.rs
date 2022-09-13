@@ -16,7 +16,7 @@ pub use builder::eval_code;
 pub use runtime::{Ptr,
   DP0, DP1, VAR, ARG,
   ERA, LAM, APP, SUP,
-  CTR, FUN, OP2, NUM,
+  CTR,      OP2, NUM,
   ADD, SUB, MUL, DIV,
   MOD, AND, OR , XOR,
   SHL, SHR, LTN, LTE,
@@ -268,10 +268,6 @@ impl Runtime {
     return CTR;
   }
 
-  pub fn FUN() -> u64 {
-    return FUN;
-  }
-
   pub fn OP2() -> u64 {
     return OP2;
   }
@@ -418,10 +414,6 @@ impl Runtime {
 
   pub fn Ctr(fun: u64, pos: u64) -> Ptr {
     return runtime::Ctr(0, fun, pos);
-  }
-
-  pub fn Fun(fun: u64, pos: u64) -> Ptr {
-    return runtime::Cal(0, fun, pos);
   }
 
   pub fn link(&mut self, loc: u64, lnk: Ptr) -> Ptr {

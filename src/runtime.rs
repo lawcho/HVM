@@ -28,7 +28,7 @@
 //   APP |   6 | an application
 //   SUP |   7 | a superposition
 //   CTR |   8 | a constructor
-//   FUN |   9 | a function
+//
 //   OP2 |  10 | a numeric operation
 //   NUM |  11 | a 60-bit number
 //
@@ -45,7 +45,7 @@
 //   APP | not used                     | points to the application node
 //   SUP | the duplication label        | points to the superposition node
 //   CTR | the constructor name         | points to the constructor node
-//   FUN | the function name            | points to the function node
+//
 //   OP2 | the operation name           | points to the operation node
 //   NUM | the most significant 30 bits | the least significant 30 bits
 //
@@ -202,7 +202,6 @@ pub const LAM: u64 = 0x5;
 pub const APP: u64 = 0x6;
 pub const SUP: u64 = 0x7;
 pub const CTR: u64 = 0x8;
-pub const FUN: u64 = 0x9;
 pub const OP2: u64 = 0xA;
 pub const NUM: u64 = 0xB;
 
@@ -346,11 +345,6 @@ pub fn Ctr(_ari: u64, fun: u64, pos: u64) -> Ptr {
   (CTR * TAG) | (fun * EXT) | pos
 }
 
-// FIXME: update name to Fun
-pub fn Cal(_ari: u64, fun: u64, pos: u64) -> Ptr {
-  (FUN * TAG) | (fun * EXT) | pos
-}
-
 // Getters
 // -------
 
@@ -473,7 +467,7 @@ pub fn collect(mem: &mut Worker, term: Ptr) {
         continue;
       }
       NUM => {}
-      CTR | FUN => {
+      CTR => {
         let arity = ask_ari(mem, term);
         for i in 0..arity {
           if i < arity - 1 {
@@ -540,8 +534,8 @@ pub fn cal_par(mem: &mut Worker, host: u64, term: Ptr, argn: Ptr, n: u64) -> Ptr
       link(mem, fun1 + i, ask_arg(mem, argn, 1));
     }
   }
-  link(mem, par0 + 0, Cal(arit, func, fun0));
-  link(mem, par0 + 1, Cal(arit, func, fun1));
+  link(mem, par0 + 0, Ctr(arit, func, fun0));
+  link(mem, par0 + 1, Ctr(arit, func, fun1));
   let done = Par(get_ext(argn), par0);
   link(mem, host, done);
   done
@@ -586,7 +580,7 @@ pub fn reduce(
           host = get_loc(term, 0);
           continue;
         }
-        FUN => {
+        CTR => {
           let fid = get_ext(term);
           //let ari = ask_ari(mem, term);
           if let Some(Some(f)) = &funs.get(fid as usize) {
@@ -814,7 +808,7 @@ pub fn reduce(
             link(mem, host, done);
           }
         }
-        FUN => {
+        CTR => {
           let fid = get_ext(term);
           let _ari = ask_ari(mem, term);
           if let Some(Some(f)) = &funs.get(fid as usize) {
@@ -886,7 +880,7 @@ pub fn normal_go(
       DP1 => {
         rec_locs.push(get_loc(term, 2));
       }
-      CTR | FUN => {
+      CTR => {
         let arity = ask_ari(mem, term);
         for i in 0..arity {
           rec_locs.push(get_loc(term, i));
@@ -1153,7 +1147,6 @@ pub fn show_lnk(x: Ptr) -> String {
       APP => "APP",
       SUP => "SUP",
       CTR => "CTR",
-      FUN => "FUN",
       OP2 => "OP2",
       NUM => "NUM",
       _ => "?",
@@ -1227,7 +1220,7 @@ pub fn show_term(
         find_lets(mem, ask_arg(mem, term, 0), lets, kinds, names, count);
         find_lets(mem, ask_arg(mem, term, 1), lets, kinds, names, count);
       }
-      CTR | FUN => {
+      CTR => {
         let arity = ask_ari(mem, term);
         for i in 0..arity {
           find_lets(mem, ask_arg(mem, term, i), lets, kinds, names, count);
@@ -1296,7 +1289,7 @@ pub fn show_term(
       NUM => {
         format!("{}", get_val(term))
       }
-      CTR | FUN => {
+      CTR => {
         let func = get_ext(term);
         let arit = ask_ari(mem, term);
         let args: Vec<String> =
@@ -1306,7 +1299,7 @@ pub fn show_term(
         } else {
           format!(
             "{}{}",
-            if get_tag(term) < FUN { String::from("C") } else { String::from("F") },
+            String::from("C"),
             func
           )
         };

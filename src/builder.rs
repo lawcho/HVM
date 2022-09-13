@@ -20,7 +20,6 @@ pub enum DynTerm {
   Let { expr: Box<DynTerm>, body: Box<DynTerm> },
   Lam { eras: bool, glob: u64, body: Box<DynTerm> },
   App { func: Box<DynTerm>, argm: Box<DynTerm> },
-  Cal { func: u64, args: Vec<DynTerm> },
   Ctr { func: u64, args: Vec<DynTerm> },
   Num { numb: u64 },
   Op2 { oper: u64, val0: Box<DynTerm>, val1: Box<DynTerm> },
@@ -415,11 +414,7 @@ pub fn term_to_dynterm(book: &rb::RuleBook, term: &lang::Term, inps: &[String]) 
       lang::Term::Ctr { name, args } => {
         let term_func = *book.name_to_id.get(name).unwrap_or_else(|| panic!("Unbound symbol: {}", name));
         let term_args = args.iter().map(|arg| convert_term(arg, book, depth + 0, vars)).collect();
-        if *book.ctr_is_cal.get(name).unwrap_or(&false) {
-          DynTerm::Cal { func: term_func, args: term_args }
-        } else {
-          DynTerm::Ctr { func: term_func, args: term_args }
-        }
+        DynTerm::Ctr { func: term_func, args: term_args }
       }
       lang::Term::Num { numb } => DynTerm::Num { numb: *numb },
       lang::Term::Op2 { oper, val0, val1 } => {
@@ -519,19 +514,6 @@ pub fn build_body(term: &DynTerm, free_vars: u64) -> Body {
         let argm = gen_elems(argm, dupk, vars, globs, nodes, links);
         links.push((targ, 1, argm));
         Elem::Loc { value: rt::App(0), targ, slot: 0 }
-      }
-      DynTerm::Cal { func, args } => {
-        if !args.is_empty() {
-          let targ = nodes.len() as u64;
-          nodes.push(vec![Elem::Fix { value: 0 }; args.len() as usize]);
-          for (i, arg) in args.iter().enumerate() {
-            let arg = gen_elems(arg, dupk, vars, globs, nodes, links);
-            links.push((targ, i as u64, arg));
-          }
-          Elem::Loc { value: rt::Cal(args.len() as u64, *func, 0), targ, slot: 0 }
-        } else {
-          Elem::Fix { value: rt::Cal(0, *func, 0) }
-        }
       }
       DynTerm::Ctr { func, args } => {
         if !args.is_empty() {

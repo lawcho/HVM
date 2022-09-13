@@ -67,7 +67,7 @@ pub fn as_term(mem: &Worker, i2n: Option<&HashMap<u64, String>>, host: u64) -> B
         gen_var_names(mem, ctx, arg1, depth + 1);
       }
       rt::NUM => {}
-      rt::CTR | rt::FUN => {
+      rt::CTR => {
         let arity = rt::ask_ari(mem, term);
         for i in 0..arity {
           let arg = rt::ask_arg(ctx.mem, term, i);
@@ -195,7 +195,7 @@ pub fn as_term(mem: &Worker, i2n: Option<&HashMap<u64, String>>, host: u64) -> B
         let numb = rt::get_num(term);
         return Box::new(lang::Term::Num { numb });
       }
-      rt::CTR | rt::FUN => {
+      rt::CTR => {
         let func = rt::get_ext(term);
         let arit = rt::ask_ari(mem, term);
         let mut args = Vec::new();
@@ -293,7 +293,7 @@ pub fn as_linear_term(rt: &Worker, i2n: Option<&HashMap<u64, String>>, host: u64
           stack.push(rt::ask_arg(rt, term, 1));
           stack.push(rt::ask_arg(rt, term, 0));
         }
-        rt::CTR | rt::FUN => {
+        rt::CTR => {
           let arity = rt::ask_ari(rt, term);
           for i in (0..arity).rev() {
             stack.push(rt::ask_arg(rt, term, i));
@@ -343,16 +343,6 @@ pub fn as_linear_term(rt: &Worker, i2n: Option<&HashMap<u64, String>>, host: u64
               let name = ctr_name(i2n, func);
               output.push(lang::Term::Ctr { name, args });
             },
-            rt::FUN => {
-              let func = rt::get_ext(term);
-              let arit = rt::ask_ari(rt, term);
-              let mut args = Vec::new();
-              for _ in 0..arit {
-                args.push(Box::new(output.pop().unwrap()));
-              }
-              let name = ctr_name(i2n, func);
-              output.push(lang::Term::Ctr { name, args });
-            }
             rt::LAM => {
               let name = format!("x{}", names.get(&rt::get_loc(term, 0)).unwrap_or(&String::from("?")));
               let body = Box::new(output.pop().unwrap());
@@ -425,13 +415,6 @@ pub fn as_linear_term(rt: &Worker, i2n: Option<&HashMap<u64, String>>, host: u64
               output.push(lang::Term::Num { numb });
             }
             rt::CTR => {
-              let arit = rt::ask_ari(rt, term);
-              stack.push(StackItem::Resolver(term));
-              for i in 0..arit {
-                stack.push(StackItem::Term(rt::ask_arg(rt, term, i)));
-              }
-            }
-            rt::FUN => {
               let arit = rt::ask_ari(rt, term);
               stack.push(StackItem::Resolver(term));
               for i in 0..arit {
