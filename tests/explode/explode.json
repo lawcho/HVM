@@ -1,0 +1,6 @@
+{
+   "test-1":{
+      "input":"",
+      "output":"(Bang (Explode (- 4 1)) (Explode (- 4 1)))\n"
+   }
+}
