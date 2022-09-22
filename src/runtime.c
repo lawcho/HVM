@@ -1437,7 +1437,9 @@ int main(int argc, char* argv[]) {
   // Reduces and benchmarks
   //printf("Reducing.\n");
   gettimeofday(&start, NULL);
+  fprintf(stderr,"[DEBUG] Normalizing...\n");fflush(stderr);
   ffi_normal((u8*)mem.node, mem.size, 0);
+  fprintf(stderr,"[DEBUG] Done normalizing!\n");fflush(stderr);
   gettimeofday(&stop, NULL);
 
   // Prints result statistics
